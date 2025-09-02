@@ -1,4 +1,9 @@
-import { useCallback, useContext, useState, useEffect, useRef } from 'react';
+import {
+	useCallback,
+	useState,
+	useEffect,
+	useRef,
+} from 'react';
 import {
 	Node,
 	Edge,
@@ -9,14 +14,12 @@ import {
 	MarkerType,
 	NodeChange,
 	EdgeChange,
-	applyNodeChanges,
-	applyEdgeChanges,
 	useReactFlow,
 	ReactFlowInstance,
 } from 'reactflow';
 import { layoutWorkflow } from '../lib/layout';
 
-interface UseWorkFlowBuilderProps {
+interface UseWorkflowBuilderProps {
 	nodeWidth?: number;
 	nodeHeight?: number;
 	direction?: 'TB' | 'LR';
@@ -29,8 +32,10 @@ interface UseWorkFlowBuilderProps {
 let nodeIdCounter = 0;
 let edgeIdCounter = 0;
 
-const generateNodeId = (prefix = 'node') => `${prefix}_${++nodeIdCounter}`;
-const generateEdgeId = (prefix = 'edge') => `${prefix}_${++edgeIdCounter}`;
+const generateNodeId = (prefix = 'node') =>
+	`${prefix}_${++nodeIdCounter}`;
+const generateEdgeId = (prefix = 'edge') =>
+	`${prefix}_${++edgeIdCounter}`;
 
 /**
  * A hook for building workflow diagrams with React Flow.
@@ -60,7 +65,7 @@ const generateEdgeId = (prefix = 'edge') => `${prefix}_${++edgeIdCounter}`;
  * }
  * ```
  */
-const useWorkFlowBuilder = ({
+const useWorkflowBuilder = ({
 	nodeWidth = 150,
 	nodeHeight = 40,
 	direction = 'TB',
@@ -68,20 +73,21 @@ const useWorkFlowBuilder = ({
 	initialEdges = [],
 	autoLayout = true,
 	useReactFlowInstance = false,
-}: UseWorkFlowBuilderProps = {}) => {
+}: UseWorkflowBuilderProps = {}) => {
 	// State management for nodes and edges
-	const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-	const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-	const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+	const [nodes, setNodes, onNodesChange] =
+		useNodesState(initialNodes);
+	const [edges, setEdges, onEdgesChange] =
+		useEdgesState(initialEdges);
+	const [selectedNodeId, setSelectedNodeId] = useState<
+		string | null
+	>(null);
 
-	// Flag to prevent layout loops
 	const isLayouting = useRef(false);
 
-	// Try to get React Flow instance if useReactFlowInstance is true
 	let reactFlowInstance: ReactFlowInstance | null = null;
 	try {
 		if (useReactFlowInstance) {
-			// This will throw an error if not used within a ReactFlowProvider
 			reactFlowInstance = useReactFlow();
 		}
 	} catch (error) {
@@ -93,7 +99,6 @@ const useWorkFlowBuilder = ({
 		}
 	}
 
-	// Custom nodes change handler to apply layout after changes
 	const handleNodesChange = useCallback(
 		(changes: NodeChange[]) => {
 			onNodesChange(changes);
@@ -101,7 +106,6 @@ const useWorkFlowBuilder = ({
 		[onNodesChange]
 	);
 
-	// Custom edges change handler to apply layout after changes
 	const handleEdgesChange = useCallback(
 		(changes: EdgeChange[]) => {
 			onEdgesChange(changes);
@@ -109,7 +113,6 @@ const useWorkFlowBuilder = ({
 		[onEdgesChange]
 	);
 
-	// Apply automatic layout
 	const applyLayout = useCallback(() => {
 		if (isLayouting.current) return { nodes, edges };
 
@@ -127,15 +130,12 @@ const useWorkFlowBuilder = ({
 		setNodes(layout.nodes);
 		setEdges(layout.edges);
 
-		// If we have a React Flow instance, fit view after layout
 		if (reactFlowInstance) {
-			// Wait for the DOM to update
 			setTimeout(() => {
 				reactFlowInstance?.fitView({ padding: 0.2 });
 			}, 50);
 		}
 
-		// Reset the layouting flag after a short delay to ensure all DOM updates have processed
 		setTimeout(() => {
 			isLayouting.current = false;
 		}, 50);
@@ -152,12 +152,14 @@ const useWorkFlowBuilder = ({
 		reactFlowInstance,
 	]);
 
-	// Auto-layout effect - runs whenever nodes or edges change
 	useEffect(() => {
-		if (!autoLayout || nodes.length === 0 || isLayouting.current) return;
+		if (
+			!autoLayout ||
+			nodes.length === 0 ||
+			isLayouting.current
+		)
+			return;
 
-		// Use requestAnimationFrame to ensure we're not blocking the main thread
-		// and to batch multiple changes together
 		const timeoutId = setTimeout(() => {
 			applyLayout();
 		}, 100);
@@ -165,7 +167,6 @@ const useWorkFlowBuilder = ({
 		return () => clearTimeout(timeoutId);
 	}, [nodes, edges, autoLayout, applyLayout]);
 
-	// Default edge options
 	const getDefaultEdgeOptions = useCallback(
 		() => ({
 			type: 'default',
@@ -180,7 +181,6 @@ const useWorkFlowBuilder = ({
 		[]
 	);
 
-	// Handle connection between nodes
 	const onConnect = useCallback(
 		(connection: Connection) => {
 			setEdges((eds) =>
@@ -197,18 +197,18 @@ const useWorkFlowBuilder = ({
 		[getDefaultEdgeOptions, setEdges]
 	);
 
-	// Create a new node
 	const createNode = useCallback(
 		(nodeData: Partial<Node>) => {
 			const newNode: Node = {
 				id: nodeData.id || generateNodeId(),
 				position: nodeData.position || { x: 0, y: 0 },
-				data: nodeData.data || { label: `Node ${nodeIdCounter}` },
+				data: nodeData.data || {
+					label: `Node ${nodeIdCounter}`,
+				},
 				type: nodeData.type || 'default',
 				...nodeData,
 			};
 
-			// If we have a React Flow instance, we can calculate better initial position
 			if (reactFlowInstance && !nodeData.position) {
 				// Center the new node in the viewport
 				const { x, y } = reactFlowInstance.project({
@@ -224,7 +224,6 @@ const useWorkFlowBuilder = ({
 		[setNodes, reactFlowInstance]
 	);
 
-	// Create a new edge
 	const createEdge = useCallback(
 		(edgeData: Partial<Edge>) => {
 			const newEdge: Edge = {
@@ -246,31 +245,35 @@ const useWorkFlowBuilder = ({
 		[getDefaultEdgeOptions, setEdges]
 	);
 
-	// Update node by ID
 	const updateNodeById = useCallback(
 		(nodeId: string, updates: Partial<Node>) => {
 			setNodes((nds) =>
-				nds.map((node) => (node.id === nodeId ? { ...node, ...updates } : node))
+				nds.map((node) =>
+					node.id === nodeId
+						? { ...node, ...updates }
+						: node
+				)
 			);
 		},
 		[setNodes]
 	);
 
-	// Delete a node and its connected edges
 	const deleteNode = useCallback(
 		(nodeId: string) => {
-			// Remove the node
-			setNodes((nds) => nds.filter((node) => node.id !== nodeId));
+			setNodes((nds) =>
+				nds.filter((node) => node.id !== nodeId)
+			);
 
-			// Remove connected edges
 			setEdges((eds) =>
-				eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
+				eds.filter(
+					(edge) =>
+						edge.source !== nodeId && edge.target !== nodeId
+				)
 			);
 		},
 		[setNodes, setEdges]
 	);
 
-	// Find node by ID
 	const getNodeById = useCallback(
 		(nodeId: string) => {
 			return nodes.find((node) => node.id === nodeId);
@@ -278,43 +281,48 @@ const useWorkFlowBuilder = ({
 		[nodes]
 	);
 
-	// Get connected nodes (outgoing)
 	const getOutgoingNodes = useCallback(
 		(nodeId: string) => {
-			const connectedEdges = edges.filter((edge) => edge.source === nodeId);
+			const connectedEdges = edges.filter(
+				(edge) => edge.source === nodeId
+			);
 			return nodes.filter((node) =>
-				connectedEdges.some((edge) => edge.target === node.id)
+				connectedEdges.some(
+					(edge) => edge.target === node.id
+				)
 			);
 		},
 		[nodes, edges]
 	);
 
-	// Get connected nodes (incoming)
 	const getIncomingNodes = useCallback(
 		(nodeId: string) => {
-			const connectedEdges = edges.filter((edge) => edge.target === nodeId);
+			const connectedEdges = edges.filter(
+				(edge) => edge.target === nodeId
+			);
 			return nodes.filter((node) =>
-				connectedEdges.some((edge) => edge.source === node.id)
+				connectedEdges.some(
+					(edge) => edge.source === node.id
+				)
 			);
 		},
 		[nodes, edges]
 	);
 
-	// Get root nodes (nodes with no incoming edges)
 	const getRootNodes = useCallback(() => {
 		return nodes.filter(
-			(node) => !edges.some((edge) => edge.target === node.id)
+			(node) =>
+				!edges.some((edge) => edge.target === node.id)
 		);
 	}, [nodes, edges]);
 
-	// Get leaf nodes (nodes with no outgoing edges)
 	const getLeafNodes = useCallback(() => {
 		return nodes.filter(
-			(node) => !edges.some((edge) => edge.source === node.id)
+			(node) =>
+				!edges.some((edge) => edge.source === node.id)
 		);
 	}, [nodes, edges]);
 
-	// Fit view - only available if useReactFlowInstance is true
 	const fitView = useCallback(() => {
 		if (reactFlowInstance) {
 			reactFlowInstance.fitView({ padding: 0.2 });
@@ -324,44 +332,35 @@ const useWorkFlowBuilder = ({
 	}, [reactFlowInstance]);
 
 	return {
-		// Core React Flow properties
 		nodes,
 		edges,
 		onNodesChange: handleNodesChange,
 		onEdgesChange: handleEdgesChange,
 		onConnect,
 
-		// Layout functionality
 		applyLayout,
 
-		// Layout configuration
 		autoLayout,
 
-		// Node operations
 		createNode,
 		updateNodeById,
 		deleteNode,
 		getNodeById,
 
-		// Edge operations
 		createEdge,
 		getDefaultEdgeOptions,
 
-		// Selection operations
 		selectedNodeId,
 		setSelectedNodeId,
 
-		// Graph analysis
 		getOutgoingNodes,
 		getIncomingNodes,
 		getRootNodes,
 		getLeafNodes,
 
-		// React Flow instance (only available if useReactFlowInstance is true)
 		reactFlowInstance,
 		fitView,
 
-		// Utility for resetting counters (useful for testing)
 		resetCounters: () => {
 			nodeIdCounter = 0;
 			edgeIdCounter = 0;
@@ -369,4 +368,4 @@ const useWorkFlowBuilder = ({
 	};
 };
 
-export default useWorkFlowBuilder;
+export default useWorkflowBuilder;

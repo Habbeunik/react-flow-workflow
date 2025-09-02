@@ -2,9 +2,14 @@
 
 A powerful React hook for building interactive workflow diagrams with React Flow. The `useWorkflowBuilder` hook simplifies the creation and management of node-based workflows with automatic layout capabilities.
 
+[![npm version](https://badge.fury.io/js/react-flow-workflow.svg)](https://badge.fury.io/js/react-flow-workflow)
+[![npm downloads](https://img.shields.io/npm/dm/react-flow-workflow.svg)](https://www.npmjs.com/package/react-flow-workflow)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ## Table of Contents
 
 - [Installation](#installation)
+- [Quick Start](#quick-start)
 - [Features](#features)
 - [When to Use](#when-to-use)
 - [Basic Usage](#basic-usage)
@@ -21,15 +26,73 @@ A powerful React hook for building interactive workflow diagrams with React Flow
 
 ## Installation
 
-```bash
-# npm
-npm install react-flow-workflow
+### Prerequisites
 
-# or yarn
-yarn add react-flow-workflow
+This package requires React 18+ and React Flow 11+ as peer dependencies.
+
+### Install the package
+
+```bash
+# Using npm
+npm install react-flow-workflow reactflow
+
+# Using yarn
+yarn add react-flow-workflow reactflow
+
+# Using pnpm
+pnpm add react-flow-workflow reactflow
 ```
 
-This package depends on `reactflow`, which will be installed as a peer dependency.
+### Install React Flow styles
+
+```bash
+# Import the CSS in your main component or entry file
+import 'reactflow/dist/style.css';
+```
+
+## Quick Start
+
+Here's a minimal example to get you started:
+
+```jsx
+import React from 'react';
+import ReactFlow from 'reactflow';
+import { useWorkflowBuilder } from 'react-flow-workflow';
+import 'reactflow/dist/style.css';
+
+function SimpleWorkflow() {
+	const {
+		nodes,
+		edges,
+		onNodesChange,
+		onEdgesChange,
+		onConnect,
+		createNode,
+	} = useWorkflowBuilder();
+
+	const addNode = () => {
+		createNode({
+			data: { label: 'New Node' },
+		});
+	};
+
+	return (
+		<div style={{ height: '400px' }}>
+			<button onClick={addNode}>Add Node</button>
+			<ReactFlow
+				nodes={nodes}
+				edges={edges}
+				onNodesChange={onNodesChange}
+				onEdgesChange={onEdgesChange}
+				onConnect={onConnect}
+				fitView
+			/>
+		</div>
+	);
+}
+
+export default SimpleWorkflow;
+```
 
 ## Features
 
@@ -65,11 +128,15 @@ This package depends on `reactflow`, which will be installed as a peer dependenc
 ```jsx
 import React from 'react';
 import ReactFlow, { Background, Controls } from 'reactflow';
-import 'reactflow/dist/style.css';
 import { useWorkflowBuilder } from 'react-flow-workflow';
+import 'reactflow/dist/style.css';
 
 const initialNodes = [
-	{ id: 'node-1', position: { x: 0, y: 0 }, data: { label: 'Start' } },
+	{
+		id: 'node-1',
+		position: { x: 0, y: 0 },
+		data: { label: 'Start' },
+	},
 ];
 
 const WorkflowEditor = () => {
@@ -139,8 +206,12 @@ export default function EdgeExample() {
 
 	const addNodesWithConnection = () => {
 		// Create two nodes
-		const sourceNode = createNode({ data: { label: 'Source' } });
-		const targetNode = createNode({ data: { label: 'Target' } });
+		const sourceNode = createNode({
+			data: { label: 'Source' },
+		});
+		const targetNode = createNode({
+			data: { label: 'Target' },
+		});
 
 		// Connect them with an edge
 		createEdge({
@@ -153,7 +224,9 @@ export default function EdgeExample() {
 
 	return (
 		<div style={{ height: '500px' }}>
-			<button onClick={addNodesWithConnection}>Add Connected Nodes</button>
+			<button onClick={addNodesWithConnection}>
+				Add Connected Nodes
+			</button>
 			<ReactFlow
 				nodes={nodes}
 				edges={edges}
@@ -196,8 +269,12 @@ export default function StyledEdgesExample() {
 
 	const addCustomEdge = () => {
 		// Create two nodes
-		const sourceNode = createNode({ data: { label: 'Source' } });
-		const targetNode = createNode({ data: { label: 'Target' } });
+		const sourceNode = createNode({
+			data: { label: 'Source' },
+		});
+		const targetNode = createNode({
+			data: { label: 'Target' },
+		});
 
 		// Create a styled edge
 		createEdge({
@@ -214,8 +291,12 @@ export default function StyledEdgesExample() {
 	};
 
 	const addDashedEdge = () => {
-		const sourceNode = createNode({ data: { label: 'Node A' } });
-		const targetNode = createNode({ data: { label: 'Node B' } });
+		const sourceNode = createNode({
+			data: { label: 'Node A' },
+		});
+		const targetNode = createNode({
+			data: { label: 'Node B' },
+		});
 
 		// Create a dashed edge
 		createEdge({
@@ -230,8 +311,12 @@ export default function StyledEdgesExample() {
 
 	return (
 		<div style={{ height: '500px' }}>
-			<button onClick={addCustomEdge}>Add Custom Edge</button>
-			<button onClick={addDashedEdge}>Add Dashed Edge</button>
+			<button onClick={addCustomEdge}>
+				Add Custom Edge
+			</button>
+			<button onClick={addDashedEdge}>
+				Add Dashed Edge
+			</button>
 			<ReactFlow
 				nodes={nodes}
 				edges={edges}
@@ -270,9 +355,21 @@ export default function EdgeAnalysisExample() {
 		getLeafNodes,
 	} = useWorkflowBuilder({
 		initialNodes: [
-			{ id: 'a', data: { label: 'Start' }, position: { x: 0, y: 0 } },
-			{ id: 'b', data: { label: 'Process' }, position: { x: 100, y: 100 } },
-			{ id: 'c', data: { label: 'End' }, position: { x: 200, y: 200 } },
+			{
+				id: 'a',
+				data: { label: 'Start' },
+				position: { x: 0, y: 0 },
+			},
+			{
+				id: 'b',
+				data: { label: 'Process' },
+				position: { x: 100, y: 100 },
+			},
+			{
+				id: 'c',
+				data: { label: 'End' },
+				position: { x: 200, y: 200 },
+			},
 		],
 		initialEdges: [
 			{ id: 'e1', source: 'a', target: 'b' },
@@ -296,13 +393,17 @@ export default function EdgeAnalysisExample() {
       - Node '${middleNodeId}' receives from: ${incoming
 			.map((n) => n.id)
 			.join(', ')}
-      - Node '${middleNodeId}' sends to: ${outgoing.map((n) => n.id).join(', ')}
+      - Node '${middleNodeId}' sends to: ${outgoing
+			.map((n) => n.id)
+			.join(', ')}
     `);
 	};
 
 	return (
 		<div style={{ height: '500px' }}>
-			<button onClick={analyzeWorkflow}>Analyze Workflow</button>
+			<button onClick={analyzeWorkflow}>
+				Analyze Workflow
+			</button>
 			<pre>{analysisResult}</pre>
 			<ReactFlow
 				nodes={nodes}
@@ -327,6 +428,7 @@ Using `useWorkflowBuilder` across multiple components with ReactFlowProvider:
 // App.tsx
 import React from 'react';
 import { ReactFlowProvider } from 'reactflow';
+import { useWorkflowBuilder } from 'react-flow-workflow';
 import 'reactflow/dist/style.css';
 import WorkflowEditor from './WorkflowEditor';
 import Toolbar from './Toolbar';
@@ -418,7 +520,9 @@ const CustomNode = ({ id, data }) => {
 			style={{
 				padding: '10px',
 				borderRadius: '5px',
-				border: isSelected ? '2px solid #1a192b' : '1px solid #ddd',
+				border: isSelected
+					? '2px solid #1a192b'
+					: '1px solid #ddd',
 				background: data.color || '#ffffff',
 			}}>
 			<Handle type="target" position={Position.Top} />
@@ -448,6 +552,7 @@ const nodeTypes = { custom: CustomNode };
 // WorkflowApp.tsx
 import React from 'react';
 import { ReactFlowProvider } from 'reactflow';
+import { useWorkflowBuilder } from 'react-flow-workflow';
 import WorkflowEditor from './WorkflowEditor';
 import EdgeControls from './EdgeControls';
 
@@ -592,6 +697,20 @@ fitView: () => boolean;
 // Utility
 resetCounters: () => void;
 ```
+
+## Package Information
+
+- **Package Name**: `react-flow-workflow`
+- **Version**: 0.1.2
+- **License**: MIT
+- **Repository**: [GitHub](https://github.com/habbeunik/react-flow-workflow)
+- **Issues**: [GitHub Issues](https://github.com/habbeunik/react-flow-workflow/issues)
+
+### Peer Dependencies
+
+- `react`: ^18.0.0
+- `react-dom`: ^18.0.0
+- `reactflow`: ^11.0.0
 
 ## License
 

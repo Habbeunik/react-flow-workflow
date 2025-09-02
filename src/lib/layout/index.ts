@@ -7,8 +7,6 @@ interface LayoutConfig {
 	rankdir?: 'TB' | 'LR';
 	nodeWidth?: number;
 	nodeHeight?: number;
-	// nodePadding: number;
-	// edgePadding: number;
 }
 export function layoutWorkflow({
 	nodes,
@@ -23,18 +21,22 @@ export function layoutWorkflow({
 	const { orderedNodes, orderedEdges } =
 		orderNodesAndEdgesByDescendantProximity(nodes, edges);
 
-	const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+	const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(
+		() => ({})
+	);
 	g.setGraph({ rankdir: config.rankdir ?? 'LR' });
 
 	orderedNodes.forEach((node) => {
 		g.setNode(node.id, {
 			...node,
-			width: config?.nodeWidth ?? node.width,
-			height: config?.nodeHeight ?? node.height,
+			width: config?.nodeWidth ?? node.width ?? 150,
+			height: config?.nodeHeight ?? node.height ?? 40,
 		});
 	});
 
-	orderedEdges.forEach((edge) => g.setEdge(edge.source, edge.target));
+	orderedEdges.forEach((edge) =>
+		g.setEdge(edge.source, edge.target)
+	);
 
 	Dagre.layout(g);
 

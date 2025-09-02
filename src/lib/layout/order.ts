@@ -31,7 +31,10 @@ function orderNodesAndEdgesByDescendantProximity(
 	);
 
 	// Process a node and its outgoing edges
-	function processNode(nodeId: string, orderedNodes: Node[]): void {
+	function processNode(
+		nodeId: string,
+		orderedNodes: Node[]
+	): void {
 		const nodeInfo = nodeMap.get(nodeId);
 		if (!nodeInfo || nodeInfo.visited) return;
 
@@ -39,7 +42,9 @@ function orderNodesAndEdgesByDescendantProximity(
 		orderedNodes.push(nodeInfo.node);
 
 		// Get all outgoing edges from this node
-		const outgoingEdges = edges.filter((edge) => edge.source === nodeId);
+		const outgoingEdges = edges.filter(
+			(edge) => edge.source === nodeId
+		);
 
 		// Process each target node
 		outgoingEdges.forEach((edge) => {
@@ -68,7 +73,7 @@ function orderNodesAndEdgesByDescendantProximity(
 		orderedNodes.map((node, index) => [node.id, index])
 	);
 
-	const orderedEdges = [...edges].sort((a, b) => {
+	const orderedEdges = edges.slice().sort((a, b) => {
 		const aTargetIndex = nodeIndexMap.get(a.target) ?? -1;
 		const bTargetIndex = nodeIndexMap.get(b.target) ?? -1;
 

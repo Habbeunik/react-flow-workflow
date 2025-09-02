@@ -1,19 +1,42 @@
 {
 	"name": "react-flow-workflow",
-	"version": "0.1.0",
-	"main": "dist/index.js",
+	"version": "0.1.4",
+	"description": "A powerful React hook for building interactive workflow diagrams with React Flow",
+	"type": "module",
+	"main": "dist/index.esm.js",
 	"module": "dist/index.esm.js",
 	"types": "dist/index.d.ts",
 	"files": [
-		"dist"
+		"dist",
+		"README.md"
 	],
 	"scripts": {
 		"build": "rollup -c",
 		"test": "jest",
 		"lint": "eslint src/**/*.{ts,tsx}",
 		"clean": "rimraf dist",
-		"prepare": "npm run clean && npm run build"
+		"prepare": "npm run clean && npm run build",
+		"prepublishOnly": "npm run clean && npm run build"
 	},
+	"keywords": [
+		"react",
+		"react-flow",
+		"workflow",
+		"diagram",
+		"node-based",
+		"hook",
+		"typescript"
+	],
+	"author": "Abbey Kumapayi <abbeykumapayi@gmail.com>",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/habbeunik/react-flow-workflow.git"
+	},
+	"bugs": {
+		"url": "https://github.com/habbeunik/react-flow-workflow/issues"
+	},
+	"homepage": "https://github.com/habbeunik/react-flow-workflow#readme",
 	"peerDependencies": {
 		"react": "^18.0.0",
 		"react-dom": "^18.0.0",
