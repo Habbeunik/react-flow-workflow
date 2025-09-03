@@ -15,18 +15,36 @@ export default {
 			format: 'cjs',
 			exports: 'named',
 			sourcemap: true,
+			interop: 'auto',
 		},
 		{
 			file: 'dist/index.esm.js',
 			format: 'es',
 			exports: 'named',
 			sourcemap: true,
+			interop: 'auto',
 		},
 	],
 	plugins: [
-		resolve(),
-		commonjs(),
-		typescript({ tsconfig: './tsconfig.json' }),
+		resolve({
+			extensions: ['.js', '.jsx', '.ts', '.tsx'],
+			preferBuiltins: true,
+		}),
+		commonjs({
+			include: 'node_modules/**',
+			transformMixedEsModules: true,
+		}),
+		typescript({
+			tsconfig: './tsconfig.json',
+			declaration: true,
+			declarationDir: './dist',
+		}),
 	],
 	external: [...Object.keys(pkg.peerDependencies || {})],
+	onwarn(warning, warn) {
+		// Skip certain warnings
+		if (warning.code === 'CIRCULAR_DEPENDENCY') return;
+		if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return;
+		warn(warning);
+	},
 };

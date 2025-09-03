@@ -98,7 +98,9 @@ export default SimpleWorkflow;
 
 `useWorkflowBuilder` provides several advantages over using React Flow's standard functions:
 
-- **🔄 Automatic Layout** - Built-in layout engine that organizes nodes without manual positioning
+- **🔄 Smart Layout Engine** - Built-in layout engine with horizontal (LR) and vertical (TB) flow support
+- **📏 Configurable Spacing** - Customizable horizontal and vertical spacing between nodes
+- **🚫 Anti-Flicker Positioning** - Pre-calculated node positions eliminate layout flicker
 - **🧰 Simplified API** - Combines multiple React Flow hooks into a single cohesive interface
 - **🔍 Graph Analysis** - Utilities for analyzing workflow structure (root nodes, leaf nodes, connections)
 - **⚡ Enhanced Node & Edge Creation** - Auto-generated IDs, consistent styling, and validation
@@ -147,24 +149,28 @@ const WorkflowEditor = () => {
 		onEdgesChange,
 		onConnect,
 		createNode,
-		applyLayout,
 	} = useWorkflowBuilder({
 		initialNodes,
-		nodeWidth: 180,
-		nodeHeight: 60,
-		autoLayout: true,
+		nodeWidth: 200,
+		nodeHeight: 80,
+		direction: 'LR', // Left to right flow (default)
+		autoLayout: false, // Manual layout by default
+		spacing: {
+			horizontal: 150, // Space between node columns
+			vertical: 120, // Space between nodes in same column
+		},
 	});
 
 	const handleAddNode = () => {
 		createNode({
 			data: { label: 'New Node' },
 		});
-		// Auto-layout will be applied automatically
 	};
 
 	return (
 		<div style={{ width: '100%', height: '800px' }}>
 			<button onClick={handleAddNode}>Add Node</button>
+
 			<ReactFlow
 				nodes={nodes}
 				edges={edges}
@@ -180,6 +186,153 @@ const WorkflowEditor = () => {
 };
 
 export default WorkflowEditor;
+```
+
+## Layout Configuration
+
+The hook now provides better layout control with configurable spacing and direction:
+
+### Anti-Flicker Positioning
+
+The package automatically pre-calculates node positions to eliminate the flicker effect and follows the workflow direction:
+
+```jsx
+// Nodes are positioned intelligently based on workflow direction
+const workflow = useWorkflowBuilder({
+	direction: 'LR', // Horizontal flow
+	spacing: { horizontal: 80, vertical: 50 },
+});
+
+// New nodes are automatically positioned following the workflow direction
+const newNode = workflow.createNode({
+	data: { label: 'New Node' },
+}); // No flicker - positioned to the right (LR) or below (TB)
+
+// Position a node after a specific node in the workflow
+const nextNode = workflow.createNodeInWorkflow(
+	{ data: { label: 'Next Step' } },
+	'previousNodeId' // Position after this node
+);
+
+// Or use the utility function for precise positioning
+const positionedNode = workflow.createNodeAtPosition(
+	{ data: { label: 'Positioned Node' } },
+	'referenceNodeId',
+	{ x: 100, y: 0 } // Offset from reference node
+);
+```
+
+### Enhanced Node Positioning
+
+The library now provides enhanced positioning options for better workflow visualization:
+
+**Standard Positioning:**
+
+```jsx
+// Create nodes with standard workflow positioning
+const newNode = workflow.createNode({
+	data: { label: 'New Node' },
+}); // Automatically positioned following workflow direction
+
+// Position after a specific node
+const nextNode = workflow.createNodeInWorkflow(
+	{ data: { label: 'Next Step' } },
+	'previousNodeId'
+);
+```
+
+**Vertical Handler Positioning (New!):**
+
+```jsx
+// For vertical workflows, position nodes with handlers at top or bottom
+const topNode = workflow.createNodeWithVerticalHandlers(
+	{ data: { label: 'Top Handler' } },
+	'top' // Position above existing nodes
+);
+
+const bottomNode = workflow.createNodeWithVerticalHandlers(
+	{ data: { label: 'Bottom Handler' } },
+	'bottom' // Position below existing nodes (default)
+);
+```
+
+**Custom Positioning:**
+
+```jsx
+// Position with custom offsets
+const positionedNode = workflow.createNodeAtPosition(
+	{ data: { label: 'Positioned Node' } },
+	'referenceNodeId',
+	{ x: 100, y: 0 } // Offset from reference node
+);
+```
+
+### Improved Spacing Configuration
+
+The library now provides better default spacing for clearer workflow visualization:
+
+```jsx
+const workflow = useWorkflowBuilder({
+	direction: 'LR', // Left to right
+	spacing: {
+		horizontal: 150, // Increased from 80 - more space between columns
+		vertical: 120, // Increased from 50 - more space between nodes
+	},
+});
+```
+
+**Vertical Flow with Enhanced Spacing:**
+
+```jsx
+const workflow = useWorkflowBuilder({
+	direction: 'TB', // Top to bottom
+	spacing: {
+		horizontal: 150, // More space between nodes in same row
+		vertical: 120, // More space between rows
+	},
+});
+```
+
+**Benefits of Enhanced Spacing:**
+
+- **Better Readability**: More space between nodes makes workflows easier to follow
+- **Improved Handler Access**: Top/bottom positioning for vertical workflows
+- **Professional Appearance**: Cleaner, more organized workflow diagrams
+- **Flexible Layout**: Easy to adjust spacing for different workflow densities
+
+### Horizontal Flow (Default)
+
+```jsx
+const workflow = useWorkflowBuilder({
+	direction: 'LR', // Left to right
+	spacing: {
+		horizontal: 150, // Space between columns
+		vertical: 120, // Space between nodes in same column
+	},
+});
+```
+
+### Vertical Flow
+
+```jsx
+const workflow = useWorkflowBuilder({
+	direction: 'TB', // Top to bottom
+	spacing: {
+		horizontal: 150, // Space between nodes in same row
+		vertical: 120, // Space between rows
+	},
+});
+```
+
+### Custom Spacing
+
+```jsx
+const workflow = useWorkflowBuilder({
+	spacing: {
+		horizontal: 200, // Wide spacing for complex workflows
+		vertical: 150, // Tall spacing for detailed nodes
+	},
+});
 ```
 
 ## Working with Edges
@@ -420,6 +573,18 @@ export default function EdgeAnalysisExample() {
 
 ## Advanced Usage
 
+### Layout Engine
+
+The package uses the proven **Dagre** graph layout engine, which provides:
+
+- **Automatic node positioning** with optimal spacing
+- **Smart edge routing** to avoid overlaps
+- **Hierarchical layout** for complex workflows
+- **Cycle handling** for complex graph structures
+- **Configurable spacing** for different workflow densities
+
+The layout automatically handles both horizontal (LR) and vertical (TB) flows with proper spacing and edge routing.
+
 ### Multiple Components
 
 Using `useWorkflowBuilder` across multiple components with ReactFlowProvider:
@@ -459,7 +624,7 @@ export default function Toolbar() {
 		createEdge,
 		getRootNodes,
 		getLeafNodes,
-		applyLayout
+
 	} = useWorkflowBuilder({
 		useReactFlowInstance: true
 	});
@@ -494,7 +659,7 @@ export default function Toolbar() {
 		<div className="toolbar">
 			<button onClick={addNode}>Add Node</button>
 			<button onClick={connectLastNodes}>Connect Nodes</button>
-			<button onClick={applyLayout}>Re-layout</button>
+
 		</div>
 	);
 }
@@ -646,13 +811,17 @@ export default function EdgeControls() {
 
 ```typescript
 interface UseWorkFlowBuilderProps {
-	nodeWidth?: number; // Default: 150
-	nodeHeight?: number; // Default: 40
-	direction?: 'TB' | 'LR'; // Default: 'TB' (top to bottom)
+	nodeWidth?: number; // Default: 200
+	nodeHeight?: number; // Default: 80
+	direction?: 'TB' | 'LR'; // Default: 'LR' (left to right)
 	initialNodes?: Node[]; // Default: []
 	initialEdges?: Edge[]; // Default: []
-	autoLayout?: boolean; // Default: true
+	autoLayout?: boolean; // Default: false
 	useReactFlowInstance?: boolean; // Default: false
+	spacing?: {
+		horizontal?: number; // Default: 150
+		vertical?: number; // Default: 120
+	};
 }
 ```
 
@@ -667,11 +836,14 @@ onEdgesChange: OnEdgesChange;
 onConnect: OnConnect;
 
 // Layout functionality
-applyLayout: () => { nodes: Node[], edges: Edge[] };
-autoLayout: boolean;
+
+
 
 // Node operations
 createNode: (nodeData: Partial<Node>) => Node;
+createNodeAtPosition: (nodeData: Partial<Node>, relativeTo?: string, offset?: { x: number; y: number }) => Node;
+createNodeInWorkflow: (nodeData: Partial<Node>, afterNodeId?: string) => Node;
+createNodeWithVerticalHandlers: (nodeData: Partial<Node>, handlerPosition?: 'top' | 'bottom') => Node;
 updateNodeById: (nodeId: string, updates: Partial<Node>) => void;
 deleteNode: (nodeId: string) => void;
 getNodeById: (nodeId: string) => Node | undefined;
@@ -701,7 +873,7 @@ resetCounters: () => void;
 ## Package Information
 
 - **Package Name**: `react-flow-workflow`
-- **Version**: 0.1.2
+- **Version**: 0.5.0
 - **License**: MIT
 - **Repository**: [GitHub](https://github.com/habbeunik/react-flow-workflow)
 - **Issues**: [GitHub Issues](https://github.com/habbeunik/react-flow-workflow/issues)

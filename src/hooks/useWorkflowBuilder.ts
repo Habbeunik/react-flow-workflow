@@ -1,12 +1,5 @@
+import { useCallback, useState, useMemo } from 'react';
 import {
-	useCallback,
-	useState,
-	useEffect,
-	useRef,
-} from 'react';
-import {
-	Node,
-	Edge,
 	useNodesState,
 	useEdgesState,
 	addEdge,
@@ -18,16 +11,11 @@ import {
 	ReactFlowInstance,
 } from 'reactflow';
 import { layoutWorkflow } from '../lib/layout';
-
-interface UseWorkflowBuilderProps {
-	nodeWidth?: number;
-	nodeHeight?: number;
-	direction?: 'TB' | 'LR';
-	initialNodes?: Node[];
-	initialEdges?: Edge[];
-	autoLayout?: boolean;
-	useReactFlowInstance?: boolean;
-}
+import {
+	UseWorkflowBuilderProps,
+	WorkflowBuilderReturn,
+} from '../types';
+import type { Node, Edge } from 'reactflow';
 
 let nodeIdCounter = 0;
 let edgeIdCounter = 0;
@@ -65,15 +53,19 @@ const generateEdgeId = (prefix = 'edge') =>
  * }
  * ```
  */
-const useWorkflowBuilder = ({
-	nodeWidth = 150,
-	nodeHeight = 40,
-	direction = 'TB',
+const useWorkflowBuilder = <
+	TNodeData = any,
+	TEdgeData = any
+>({
+	nodeWidth = 200,
+	nodeHeight = 80,
+	direction = 'LR',
 	initialNodes = [],
 	initialEdges = [],
-	autoLayout = true,
+
 	useReactFlowInstance = false,
-}: UseWorkflowBuilderProps = {}) => {
+	spacing = { horizontal: 150, vertical: 120 },
+}: UseWorkflowBuilderProps<TNodeData, TEdgeData> = {}) => {
 	// State management for nodes and edges
 	const [nodes, setNodes, onNodesChange] =
 		useNodesState(initialNodes);
@@ -82,8 +74,6 @@ const useWorkflowBuilder = ({
 	const [selectedNodeId, setSelectedNodeId] = useState<
 		string | null
 	>(null);
-
-	const isLayouting = useRef(false);
 
 	let reactFlowInstance: ReactFlowInstance | null = null;
 	try {
@@ -101,7 +91,20 @@ const useWorkflowBuilder = ({
 
 	const handleNodesChange = useCallback(
 		(changes: NodeChange[]) => {
-			onNodesChange(changes);
+			// Filter out unnecessary changes that might cause drag issues
+			const filteredChanges = changes.filter((change) => {
+				// Allow all changes except potentially problematic ones
+				if (change.type === 'position' && change.position) {
+					// Ensure position changes are valid
+					return (
+						change.position.x !== undefined &&
+						change.position.y !== undefined
+					);
+				}
+				return true;
+			});
+
+			onNodesChange(filteredChanges);
 		},
 		[onNodesChange]
 	);
@@ -112,60 +115,6 @@ const useWorkflowBuilder = ({
 		},
 		[onEdgesChange]
 	);
-
-	const applyLayout = useCallback(() => {
-		if (isLayouting.current) return { nodes, edges };
-
-		isLayouting.current = true;
-		const layout = layoutWorkflow({
-			nodes,
-			edges,
-			config: {
-				rankdir: direction,
-				nodeWidth,
-				nodeHeight,
-			},
-		});
-
-		setNodes(layout.nodes);
-		setEdges(layout.edges);
-
-		if (reactFlowInstance) {
-			setTimeout(() => {
-				reactFlowInstance?.fitView({ padding: 0.2 });
-			}, 50);
-		}
-
-		setTimeout(() => {
-			isLayouting.current = false;
-		}, 50);
-
-		return { nodes: layout.nodes, edges: layout.edges };
-	}, [
-		nodes,
-		edges,
-		direction,
-		nodeWidth,
-		nodeHeight,
-		setNodes,
-		setEdges,
-		reactFlowInstance,
-	]);
-
-	useEffect(() => {
-		if (
-			!autoLayout ||
-			nodes.length === 0 ||
-			isLayouting.current
-		)
-			return;
-
-		const timeoutId = setTimeout(() => {
-			applyLayout();
-		}, 100);
-
-		return () => clearTimeout(timeoutId);
-	}, [nodes, edges, autoLayout, applyLayout]);
 
 	const getDefaultEdgeOptions = useCallback(
 		() => ({
@@ -199,9 +148,65 @@ const useWorkflowBuilder = ({
 
 	const createNode = useCallback(
 		(nodeData: Partial<Node>) => {
+			// Pre-calculate position to prevent flicker
+			let calculatedPosition = nodeData.position;
+
+			if (!calculatedPosition) {
+				if (nodes.length > 0) {
+					// Find the rightmost/bottommost node for proper workflow positioning
+					let referenceNode = nodes[0];
+
+					if (direction === 'LR') {
+						// For horizontal flow, find the rightmost node
+						referenceNode = nodes.reduce(
+							(rightmost, node) =>
+								node.position.x > rightmost.position.x
+									? node
+									: rightmost
+						);
+					} else {
+						// For vertical flow, find the bottommost node
+						referenceNode = nodes.reduce(
+							(bottommost, node) =>
+								node.position.y > bottommost.position.y
+									? node
+									: bottommost
+						);
+					}
+
+					// Calculate position based on workflow direction
+					if (direction === 'LR') {
+						// Horizontal flow: place to the right, aligned with workflow level
+						calculatedPosition = {
+							x:
+								referenceNode.position.x +
+								(nodeWidth + (spacing?.horizontal ?? 150)),
+							y: referenceNode.position.y, // Align with workflow level
+						};
+					} else {
+						// Vertical flow: place below, aligned with workflow level
+						calculatedPosition = {
+							x: referenceNode.position.x, // Align with workflow level
+							y:
+								referenceNode.position.y +
+								(nodeHeight + (spacing?.vertical ?? 120)),
+						};
+					}
+				} else if (reactFlowInstance) {
+					// Center the first node in the viewport
+					calculatedPosition = reactFlowInstance.project({
+						x: window.innerWidth / 2,
+						y: window.innerHeight / 2,
+					});
+				} else {
+					// Fallback position
+					calculatedPosition = { x: 100, y: 100 };
+				}
+			}
+
 			const newNode: Node = {
 				id: nodeData.id || generateNodeId(),
-				position: nodeData.position || { x: 0, y: 0 },
+				position: calculatedPosition,
 				data: nodeData.data || {
 					label: `Node ${nodeIdCounter}`,
 				},
@@ -209,19 +214,18 @@ const useWorkflowBuilder = ({
 				...nodeData,
 			};
 
-			if (reactFlowInstance && !nodeData.position) {
-				// Center the new node in the viewport
-				const { x, y } = reactFlowInstance.project({
-					x: window.innerWidth / 2,
-					y: window.innerHeight / 2,
-				});
-				newNode.position = { x, y };
-			}
-
 			setNodes((nds) => [...nds, newNode]);
 			return newNode;
 		},
-		[setNodes, reactFlowInstance]
+		[
+			setNodes,
+			reactFlowInstance,
+			nodes,
+			direction,
+			nodeWidth,
+			nodeHeight,
+			spacing,
+		]
 	);
 
 	const createEdge = useCallback(
@@ -243,6 +247,161 @@ const useWorkflowBuilder = ({
 			return newEdge;
 		},
 		[getDefaultEdgeOptions, setEdges]
+	);
+
+	// Calculate layout using useMemo - automatically recalculates when nodes or edges change
+	const layoutResult = useMemo(() => {
+		if (nodes.length === 0) {
+			return { nodes: [], edges: [] };
+		}
+
+		return layoutWorkflow({
+			nodes,
+			edges,
+			config: {
+				rankdir: direction,
+				nodeWidth,
+				nodeHeight,
+				spacing,
+			},
+		});
+	}, [
+		nodes,
+		edges,
+		direction,
+		nodeWidth,
+		nodeHeight,
+		spacing,
+	]);
+
+	// Use the calculated layout for rendering
+	const positionedNodes = layoutResult.nodes;
+	const positionedEdges = layoutResult.edges;
+
+	// Utility function to create a node with handlers positioned for vertical movement
+	const createNodeWithVerticalHandlers = useCallback(
+		(
+			nodeData: Partial<Node>,
+			handlerPosition: 'top' | 'bottom' = 'bottom'
+		) => {
+			// Create node and let layout engine handle positioning
+			return createNode({
+				...nodeData,
+				// Store the handler position in data for layout engine to use
+				data: {
+					...(nodeData.data || {}),
+					handlerPosition,
+				},
+			});
+		},
+		[createNode]
+	);
+
+	// Utility function to create a node at a specific position relative to another node
+	const createNodeAtPosition = useCallback(
+		(
+			nodeData: Partial<Node>,
+			relativeTo?: string,
+			offset?: { x: number; y: number }
+		) => {
+			let calculatedPosition = nodeData.position;
+
+			if (!calculatedPosition && relativeTo) {
+				const referenceNode = nodes.find(
+					(n) => n.id === relativeTo
+				);
+				if (referenceNode) {
+					const defaultOffset = offset || { x: 0, y: 0 };
+					calculatedPosition = {
+						x: referenceNode.position.x + defaultOffset.x,
+						y: referenceNode.position.y + defaultOffset.y,
+					};
+				}
+			}
+
+			return createNode({
+				...nodeData,
+				position: calculatedPosition,
+			});
+		},
+		[createNode, nodes]
+	);
+
+	// Utility function to create a node that follows the workflow direction
+	const createNodeInWorkflow = useCallback(
+		(nodeData: Partial<Node>, afterNodeId?: string) => {
+			let calculatedPosition = nodeData.position;
+
+			if (!calculatedPosition) {
+				if (afterNodeId) {
+					// Position after a specific node
+					const afterNode = nodes.find(
+						(n) => n.id === afterNodeId
+					);
+					if (afterNode) {
+						if (direction === 'LR') {
+							calculatedPosition = {
+								x:
+									afterNode.position.x +
+									(nodeWidth + (spacing?.horizontal ?? 80)),
+								y: afterNode.position.y,
+							};
+						} else {
+							calculatedPosition = {
+								x: afterNode.position.x,
+								y:
+									afterNode.position.y +
+									(nodeHeight + (spacing?.vertical ?? 50)),
+							};
+						}
+					}
+				} else {
+					// Position at the end of the workflow
+					if (nodes.length > 0) {
+						if (direction === 'LR') {
+							const rightmostNode = nodes.reduce(
+								(rightmost, node) =>
+									node.position.x > rightmost.position.x
+										? node
+										: rightmost
+							);
+							calculatedPosition = {
+								x:
+									rightmostNode.position.x +
+									(nodeWidth + (spacing?.horizontal ?? 80)),
+								y: rightmostNode.position.y,
+							};
+						} else {
+							const bottommostNode = nodes.reduce(
+								(bottommost, node) =>
+									node.position.y > bottommost.position.y
+										? node
+										: bottommost
+							);
+							calculatedPosition = {
+								x: bottommostNode.position.x,
+								y:
+									bottommostNode.position.y +
+									(nodeHeight + (spacing?.vertical ?? 50)),
+							};
+						}
+					}
+				}
+			}
+
+			return createNode({
+				...nodeData,
+				position: calculatedPosition,
+			});
+		},
+		[
+			createNode,
+			nodes,
+			direction,
+			nodeWidth,
+			nodeHeight,
+			spacing,
+		]
 	);
 
 	const updateNodeById = useCallback(
@@ -331,18 +490,20 @@ const useWorkflowBuilder = ({
 		return false;
 	}, [reactFlowInstance]);
 
-	return {
-		nodes,
-		edges,
+	const result: WorkflowBuilderReturn<
+		TNodeData,
+		TEdgeData
+	> = {
+		nodes: positionedNodes,
+		edges: positionedEdges,
 		onNodesChange: handleNodesChange,
 		onEdgesChange: handleEdgesChange,
 		onConnect,
 
-		applyLayout,
-
-		autoLayout,
-
 		createNode,
+		createNodeAtPosition,
+		createNodeInWorkflow,
+		createNodeWithVerticalHandlers,
 		updateNodeById,
 		deleteNode,
 		getNodeById,
@@ -366,6 +527,8 @@ const useWorkflowBuilder = ({
 			edgeIdCounter = 0;
 		},
 	};
+
+	return result;
 };
 
 export default useWorkflowBuilder;
