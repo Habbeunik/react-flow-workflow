@@ -28,8 +28,21 @@ export type {
 } from 'reactflow';
 
 // Type aliases for workflow-specific usage - these are exactly the same as ReactFlow types
-export type WorkflowNode<TData = any> = Node<TData>;
-export type WorkflowEdge<TData = any> = Edge<TData>;
+export type WorkflowNode<TData = any> = Node<TData> & {
+	// Explicitly ensure required properties are present
+	id: string;
+	position: { x: number; y: number };
+	data?: TData;
+};
+
+// Ensure FlowEdge properly extends ReactFlow's Edge with all required properties
+export type WorkflowEdge<TData = any> = Edge<TData> & {
+	// Explicitly ensure required properties are present
+	id: string;
+	source: string;
+	target: string;
+	data?: TData;
+};
 
 export interface UseWorkflowBuilderProps<
 	TNodeData = any,
@@ -48,6 +61,13 @@ export interface UseWorkflowBuilderProps<
 	// Optional custom node and edge types
 	nodeTypes?: NodeTypes;
 	edgeTypes?: EdgeTypes;
+	// Auto-view configuration
+	autoCenter?: boolean; // Default: false
+	animate?: boolean; // Default: false
+	animationDuration?: number; // Default: 300ms
+	// Performance options
+	enableDragOptimization?: boolean; // Default: true
+	layoutDebounceMs?: number; // Default: 100
 }
 
 // Generic return type for the workflow builder

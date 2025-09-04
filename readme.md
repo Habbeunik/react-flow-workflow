@@ -100,7 +100,7 @@ export default SimpleWorkflow;
 
 - **🔄 Smart Layout Engine** - Built-in layout engine with horizontal (LR) and vertical (TB) flow support
 - **📏 Configurable Spacing** - Customizable horizontal and vertical spacing between nodes
-- **🚫 Anti-Flicker Positioning** - Pre-calculated node positions eliminate layout flicker
+- **🚫 Layout-First Architecture** - All positioning handled by the layout engine, eliminating manual calculations
 - **🧰 Simplified API** - Combines multiple React Flow hooks into a single cohesive interface
 - **🔍 Graph Analysis** - Utilities for analyzing workflow structure (root nodes, leaf nodes, connections)
 - **⚡ Enhanced Node & Edge Creation** - Auto-generated IDs, consistent styling, and validation
@@ -334,6 +334,65 @@ const workflow = useWorkflowBuilder({
 	},
 });
 ```
+
+## Layout-First Architecture
+
+The hook now uses a **layout-first approach** where all node positioning is handled by the layout engine:
+
+- **🎯 No Manual Positioning**: `createNode`, `createNodeInWorkflow`, and other functions no longer calculate positions
+- **🔄 Automatic Layout**: The `useMemo` layout calculation handles all positioning automatically
+- **📊 Smart Positioning**: Layout engine respects workflow direction, spacing, and special positioning requirements
+- **⚡ Performance Optimized**: Layout calculations are debounced and cached during drag operations
+
+### **How It Works**
+
+1. **Node Creation**: Functions like `createNode` create nodes with temporary positions `{ x: 0, y: 0 }`
+2. **Layout Calculation**: The `useMemo` hook automatically recalculates layout when nodes/edges change
+3. **Position Assignment**: The layout engine assigns final positions based on workflow direction and spacing
+4. **Auto-Centering**: When `autoCenter` is enabled, the view centers on the last added node after layout
+
+## Enhanced Configuration Options
+
+The hook now provides additional configuration options for better workflow visualization and performance:
+
+```jsx
+const workflow = useWorkflowBuilder({
+	// Basic configuration
+	direction: 'TB', // Top to bottom
+	spacing: {
+		horizontal: 150, // More space between nodes
+		vertical: 120, // More space between rows
+	},
+
+	// Auto-view configuration
+	autoCenter: true, // Automatically center the workflow on the last added node
+	animate: true, // Smooth transitions for centering (enabled by default)
+	animationDuration: 300, // Customize animation duration in milliseconds
+
+	// Performance options
+	enableDragOptimization: true, // Optimize performance during dragging
+	layoutDebounceMs: 100, // Debounce layout calculations (ms)
+});
+```
+
+### **Auto-View Features**
+
+- **`autoCenter`**: Centers the workflow view on the last added node when nodes are added/removed (uses React Flow's `setCenter`)
+- **`animate`**: Enables smooth transitions (300ms duration by default) for centering
+
+### **Performance Optimizations**
+
+- **`enableDragOptimization`**: Skips layout calculations during dragging for smooth performance
+- **`layoutDebounceMs`**: Controls how long to wait after dragging stops before recalculating layout
+- **Smart Layout Caching**: Layout results are cached and reused during drag operations
+- **Debounced Updates**: Prevents excessive layout calculations during rapid changes
+
+### **Performance Benefits**
+
+- **🚀 Smooth Dragging**: Canvas dragging no longer hangs or lags
+- **⚡ Faster Updates**: Layout calculations are optimized and debounced
+- **🎯 Better UX**: Responsive interactions even with complex workflows
+- **🔄 Smart Caching**: Layout results are intelligently cached and reused
 
 ## Working with Edges
 
