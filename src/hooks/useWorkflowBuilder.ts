@@ -2,7 +2,6 @@ import {
 	useCallback,
 	useState,
 	useMemo,
-	useRef,
 	useEffect,
 } from 'react';
 import {
@@ -74,10 +73,7 @@ const useWorkflowBuilder = <
 	autoCenter = false,
 	animate = true,
 	animationDuration = 300,
-	enableDragOptimization = true,
-	layoutDebounceMs = 100,
 }: UseWorkflowBuilderProps<TNodeData, TEdgeData> = {}) => {
-	// State management for nodes and edges
 	const [nodes, setNodes, onNodesChange] =
 		useNodesState(initialNodes);
 	const [edges, setEdges, onEdgesChange] =
@@ -85,14 +81,6 @@ const useWorkflowBuilder = <
 	const [selectedNodeId, setSelectedNodeId] = useState<
 		string | null
 	>(null);
-	const [isDragging, setIsDragging] = useState(false);
-
-	// Refs for performance optimization
-	const layoutTimeoutRef = useRef<NodeJS.Timeout>();
-	const lastLayoutRef = useRef<{
-		nodes: Node[];
-		edges: Edge[];
-	}>({ nodes: [], edges: [] });
 
 	let reactFlowInstance: ReactFlowInstance | null = null;
 	try {
@@ -110,30 +98,9 @@ const useWorkflowBuilder = <
 
 	const handleNodesChange = useCallback(
 		(changes: NodeChange[]) => {
-			// Detect dragging state for performance optimization
-			const hasDragChanges = changes.some(
-				(change) => change.type === 'position'
-			);
-
-			if (hasDragChanges && enableDragOptimization) {
-				setIsDragging(true);
-
-				// Clear any existing layout timeout
-				if (layoutTimeoutRef.current) {
-					clearTimeout(layoutTimeoutRef.current);
-				}
-
-				// Set a timeout to reset dragging state and trigger layout
-				layoutTimeoutRef.current = setTimeout(() => {
-					setIsDragging(false);
-				}, layoutDebounceMs);
-			}
-
-			// Filter out unnecessary changes that might cause drag issues
+			// Filter out unnecessary changes that might cause issues
 			const filteredChanges = changes.filter((change) => {
-				// Allow all changes except potentially problematic ones
 				if (change.type === 'position' && change.position) {
-					// Ensure position changes are valid
 					return (
 						change.position.x !== undefined &&
 						change.position.y !== undefined
@@ -144,11 +111,7 @@ const useWorkflowBuilder = <
 
 			onNodesChange(filteredChanges);
 		},
-		[
-			onNodesChange,
-			enableDragOptimization,
-			layoutDebounceMs,
-		]
+		[onNodesChange]
 	);
 
 	const handleEdgesChange = useCallback(
@@ -190,63 +153,10 @@ const useWorkflowBuilder = <
 
 	const createNode = useCallback(
 		(nodeData: Partial<Node>) => {
-			// Pre-calculate position to prevent flicker
-			let calculatedPosition = nodeData.position;
-
-			if (!calculatedPosition) {
-				if (nodes.length > 0) {
-					// Find the rightmost/bottommost node for proper workflow positioning
-					let referenceNode = nodes[0];
-
-					if (direction === 'LR') {
-						// For horizontal flow, find the rightmost node
-						referenceNode = nodes.reduce(
-							(rightmost, node) =>
-								node.position.x > rightmost.position.x
-									? node
-									: rightmost
-						);
-					} else {
-						// For vertical flow, find the bottommost node
-						referenceNode = nodes.reduce(
-							(bottommost, node) =>
-								node.position.y > bottommost.position.y
-									? node
-									: bottommost
-						);
-					}
-
-					// Calculate position based on workflow direction
-					if (direction === 'LR') {
-						// Horizontal flow: place to the right, aligned with workflow level
-						calculatedPosition = {
-							x:
-								referenceNode.position.x +
-								(nodeWidth + (spacing?.horizontal ?? 150)),
-							y: referenceNode.position.y, // Align with workflow level
-						};
-					} else {
-						// Vertical flow: place below, aligned with workflow level
-						calculatedPosition = {
-							x: referenceNode.position.x, // Align with workflow level
-							y:
-								referenceNode.position.y +
-								(nodeHeight + (spacing?.vertical ?? 120)),
-						};
-					}
-				} else if (reactFlowInstance) {
-					calculatedPosition = reactFlowInstance.project({
-						x: window.innerWidth / 2,
-						y: window.innerHeight / 2,
-					});
-				} else {
-					calculatedPosition = { x: 100, y: 100 };
-				}
-			}
-
+			// Create node with temporary position - layout engine will handle positioning
 			const newNode: Node = {
 				id: nodeData.id || generateNodeId(),
-				position: calculatedPosition,
+				position: nodeData.position || { x: 0, y: 0 }, // Temporary position
 				data: nodeData.data || {
 					label: `Node ${nodeIdCounter}`,
 				},
@@ -257,15 +167,7 @@ const useWorkflowBuilder = <
 			setNodes((nds) => [...nds, newNode]);
 			return newNode;
 		},
-		[
-			setNodes,
-			reactFlowInstance,
-			nodes,
-			direction,
-			nodeWidth,
-			nodeHeight,
-			spacing,
-		]
+		[setNodes]
 	);
 
 	const createEdge = useCallback(
@@ -290,17 +192,11 @@ const useWorkflowBuilder = <
 	);
 
 	const layoutResult = useMemo(() => {
-		if (isDragging && enableDragOptimization) {
-			return lastLayoutRef.current;
-		}
-
 		if (nodes.length === 0) {
-			const result = { nodes: [], edges: [] };
-			lastLayoutRef.current = result;
-			return result;
+			return { nodes: [], edges: [] };
 		}
 
-		const result = layoutWorkflow({
+		return layoutWorkflow({
 			nodes,
 			edges,
 			config: {
@@ -310,10 +206,6 @@ const useWorkflowBuilder = <
 				spacing,
 			},
 		});
-
-		// Cache the last layout result
-		lastLayoutRef.current = result;
-		return result;
 	}, [
 		nodes,
 		edges,
@@ -321,8 +213,6 @@ const useWorkflowBuilder = <
 		nodeWidth,
 		nodeHeight,
 		spacing,
-		isDragging,
-		enableDragOptimization,
 	]);
 
 	const positionedNodes = layoutResult.nodes;
@@ -365,16 +255,13 @@ const useWorkflowBuilder = <
 		[createNode]
 	);
 
-	// Utility function to create a node that follows the workflow direction
 	const createNodeInWorkflow = useCallback(
 		(nodeData: Partial<Node>, afterNodeId?: string) => {
-			// Create node and let layout engine handle positioning
-			// Pass afterNodeId in data for layout engine to use
 			return createNode({
 				...nodeData,
 				data: {
 					...(nodeData.data || {}),
-					afterNodeId, // Layout engine will use this for positioning
+					afterNodeId,
 				},
 			});
 		},
@@ -471,9 +358,7 @@ const useWorkflowBuilder = <
 		if (!reactFlowInstance || positionedNodes.length === 0)
 			return;
 
-		// Auto-center when nodes are added/removed
-		if (autoCenter && !isDragging) {
-			// Get the last added node from the positioned nodes (after layout)
+		if (autoCenter) {
 			const lastNode =
 				positionedNodes[positionedNodes.length - 1];
 			if (lastNode) {
@@ -481,12 +366,10 @@ const useWorkflowBuilder = <
 				const centerY = lastNode.position.y;
 
 				if (animate) {
-					// Smooth transition with animation
 					reactFlowInstance.setCenter(centerX, centerY, {
 						duration: animationDuration,
 					});
 				} else {
-					// Instant center
 					reactFlowInstance.setCenter(centerX, centerY);
 				}
 			}
@@ -496,17 +379,8 @@ const useWorkflowBuilder = <
 		reactFlowInstance,
 		autoCenter,
 		animate,
-		isDragging,
 		animationDuration,
 	]);
-
-	useEffect(() => {
-		return () => {
-			if (layoutTimeoutRef.current) {
-				clearTimeout(layoutTimeoutRef.current);
-			}
-		};
-	}, []);
 
 	const result: WorkflowBuilderReturn<
 		TNodeData,

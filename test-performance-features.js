@@ -14,8 +14,6 @@ function PerformanceTest() {
 		autoCenter: true,
 		// animate: true, // Enabled by default
 		animationDuration: 300, // Custom duration
-		enableDragOptimization: true,
-		layoutDebounceMs: 100,
 		useReactFlowInstance: true,
 	});
 
@@ -25,7 +23,6 @@ function PerformanceTest() {
 		spacing: { horizontal: 150, vertical: 120 },
 		autoCenter: false,
 		animate: false, // Disable animation for comparison
-		enableDragOptimization: false,
 		useReactFlowInstance: true,
 	});
 
@@ -161,12 +158,6 @@ function PerformanceTest() {
 							✅ Smooth animations (300ms duration by
 							default)
 						</li>
-						<li>
-							✅ Drag optimization (skips layout during
-							dragging)
-						</li>
-						<li>✅ Layout debouncing (100ms delay)</li>
-						<li>✅ Smart layout caching</li>
 					</ul>
 
 					<p>
@@ -174,10 +165,6 @@ function PerformanceTest() {
 					</p>
 					<ol>
 						<li>Add nodes to both workflows</li>
-						<li>
-							Try dragging nodes around - optimized version
-							should be smoother
-						</li>
 						<li>
 							Add many nodes to see auto-center on last node
 							in action

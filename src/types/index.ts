@@ -65,9 +65,6 @@ export interface UseWorkflowBuilderProps<
 	autoCenter?: boolean; // Default: false
 	animate?: boolean; // Default: false
 	animationDuration?: number; // Default: 300ms
-	// Performance options
-	enableDragOptimization?: boolean; // Default: true
-	layoutDebounceMs?: number; // Default: 100
 }
 
 // Generic return type for the workflow builder

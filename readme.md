@@ -368,10 +368,6 @@ const workflow = useWorkflowBuilder({
 	autoCenter: true, // Automatically center the workflow on the last added node
 	animate: true, // Smooth transitions for centering (enabled by default)
 	animationDuration: 300, // Customize animation duration in milliseconds
-
-	// Performance options
-	enableDragOptimization: true, // Optimize performance during dragging
-	layoutDebounceMs: 100, // Debounce layout calculations (ms)
 });
 ```
 
@@ -379,20 +375,6 @@ const workflow = useWorkflowBuilder({
 
 - **`autoCenter`**: Centers the workflow view on the last added node when nodes are added/removed (uses React Flow's `setCenter`)
 - **`animate`**: Enables smooth transitions (300ms duration by default) for centering
-
-### **Performance Optimizations**
-
-- **`enableDragOptimization`**: Skips layout calculations during dragging for smooth performance
-- **`layoutDebounceMs`**: Controls how long to wait after dragging stops before recalculating layout
-- **Smart Layout Caching**: Layout results are cached and reused during drag operations
-- **Debounced Updates**: Prevents excessive layout calculations during rapid changes
-
-### **Performance Benefits**
-
-- **🚀 Smooth Dragging**: Canvas dragging no longer hangs or lags
-- **⚡ Faster Updates**: Layout calculations are optimized and debounced
-- **🎯 Better UX**: Responsive interactions even with complex workflows
-- **🔄 Smart Caching**: Layout results are intelligently cached and reused
 
 ## Working with Edges
 
