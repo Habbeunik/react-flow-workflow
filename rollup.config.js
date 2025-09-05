@@ -40,6 +40,7 @@ export default {
 			declarationDir: './dist',
 			declarationMap: true,
 			rootDir: './src',
+			outputToFilesystem: true,
 		}),
 	],
 	external: [...Object.keys(pkg.peerDependencies || {})],
