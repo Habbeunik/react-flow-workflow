@@ -11,7 +11,8 @@
 		"README.md"
 	],
 	"scripts": {
-		"build": "rollup -c",
+		"build": "rollup -c && npm run build:types",
+		"build:types": "tsc --declaration --declarationDir dist --outDir dist --emitDeclarationOnly",
 		"test": "jest",
 		"lint": "eslint src/**/*.{ts,tsx}",
 		"clean": "rimraf dist",
