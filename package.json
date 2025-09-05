@@ -3,16 +3,22 @@
 	"version": "0.6.4",
 	"description": "A powerful React hook for building interactive workflow diagrams with React Flow",
 	"type": "module",
-	"main": "dist/index.esm.js",
+	"main": "dist/index.js",
 	"module": "dist/index.esm.js",
 	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.esm.js",
+			"require": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
 	"files": [
 		"dist",
 		"README.md"
 	],
 	"scripts": {
-		"build": "rollup -c && npm run build:types",
-		"build:types": "tsc --declaration --declarationDir dist --outDir dist --emitDeclarationOnly",
+		"build": "rollup -c",
 		"test": "jest",
 		"lint": "eslint src/**/*.{ts,tsx}",
 		"clean": "rimraf dist",

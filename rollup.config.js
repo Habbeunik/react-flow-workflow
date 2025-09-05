@@ -38,6 +38,8 @@ export default {
 			tsconfig: './tsconfig.json',
 			declaration: true,
 			declarationDir: './dist',
+			declarationMap: true,
+			rootDir: './src',
 		}),
 	],
 	external: [...Object.keys(pkg.peerDependencies || {})],
