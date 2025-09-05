@@ -1,6 +1,6 @@
 {
 	"name": "react-flow-workflow",
-	"version": "0.6.3",
+	"version": "0.6.4",
 	"description": "A powerful React hook for building interactive workflow diagrams with React Flow",
 	"type": "module",
 	"main": "dist/index.esm.js",
