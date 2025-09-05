@@ -85,7 +85,7 @@ const useWorkflowBuilder = <
 
 	// ReactFlow instance - only use it if explicitly requested and available
 	let reactFlowInstance: ReactFlowInstance | null = null;
-	
+
 	if (useReactFlowInstance) {
 		try {
 			// This will only work if we're inside a ReactFlow component tree
