@@ -3,6 +3,7 @@ import {
 	useState,
 	useMemo,
 	useEffect,
+	useRef,
 } from 'react';
 import {
 	useNodesState,
@@ -82,16 +83,19 @@ const useWorkflowBuilder = <
 		string | null
 	>(null);
 
+	// ReactFlow instance - only use it if explicitly requested and available
 	let reactFlowInstance: ReactFlowInstance | null = null;
-	try {
-		if (useReactFlowInstance) {
+	
+	if (useReactFlowInstance) {
+		try {
+			// This will only work if we're inside a ReactFlow component tree
 			reactFlowInstance = useReactFlow();
-		}
-	} catch (error) {
-		if (useReactFlowInstance) {
+		} catch (error) {
+			// ReactFlowProvider is not available - this is expected in some cases
+			reactFlowInstance = null;
 			console.warn(
 				'useWorkflowBuilder: useReactFlowInstance is true but ReactFlowProvider is not available. ' +
-					'Make sure to wrap your component with ReactFlowProvider.'
+					'Make sure to wrap your component with ReactFlowProvider or set useReactFlowInstance to false.'
 			);
 		}
 	}
