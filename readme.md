@@ -364,6 +364,9 @@ const workflow = useWorkflowBuilder({
 		vertical: 120, // More space between rows
 	},
 
+	// Required for auto-center functionality
+	useReactFlowInstance: true, // Must be true for auto-center to work
+
 	// Auto-view configuration
 	autoCenter: true, // Automatically center the workflow on the last added node
 	animate: true, // Smooth transitions for centering (enabled by default)
@@ -375,6 +378,8 @@ const workflow = useWorkflowBuilder({
 
 - **`autoCenter`**: Centers the workflow view on the last added node when nodes are added/removed (uses React Flow's `setCenter`)
 - **`animate`**: Enables smooth transitions (300ms duration by default) for centering
+
+**⚠️ Important**: Auto-center requires `useReactFlowInstance: true` and your component to be wrapped with `ReactFlowProvider`.
 
 ## Working with Edges
 

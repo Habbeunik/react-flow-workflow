@@ -7,23 +7,23 @@ import { useWorkflowBuilder } from './dist/index.js';
 function PerformanceTest() {
 	const [nodeCount, setNodeCount] = useState(5);
 
-	// Test with performance optimizations enabled
+	// Test with auto-center enabled
 	const workflowOptimized = useWorkflowBuilder({
 		direction: 'TB',
 		spacing: { horizontal: 150, vertical: 120 },
+		useReactFlowInstance: true, // Required for auto-center
 		autoCenter: true,
 		// animate: true, // Enabled by default
 		animationDuration: 300, // Custom duration
-		useReactFlowInstance: true,
 	});
 
-	// Test without optimizations for comparison
+	// Test without auto-center for comparison
 	const workflowBasic = useWorkflowBuilder({
 		direction: 'TB',
 		spacing: { horizontal: 150, vertical: 120 },
+		useReactFlowInstance: true, // Still need this for ReactFlow instance
 		autoCenter: false,
 		animate: false, // Disable animation for comparison
-		useReactFlowInstance: true,
 	});
 
 	const addNodes = (workflow, count = 5) => {

@@ -355,8 +355,18 @@ const useWorkflowBuilder = <
 	}, [reactFlowInstance]);
 
 	useEffect(() => {
-		if (!reactFlowInstance || positionedNodes.length === 0)
+		if (
+			!reactFlowInstance ||
+			positionedNodes.length === 0
+		) {
+			if (autoCenter && !reactFlowInstance) {
+				console.warn(
+					'useWorkflowBuilder: autoCenter is enabled but reactFlowInstance is not available. ' +
+						'Make sure to set useReactFlowInstance: true and wrap your component with ReactFlowProvider.'
+				);
+			}
 			return;
+		}
 
 		if (autoCenter) {
 			const lastNode =
@@ -364,6 +374,13 @@ const useWorkflowBuilder = <
 			if (lastNode) {
 				const centerX = lastNode.position.x;
 				const centerY = lastNode.position.y;
+
+				console.log(
+					'Auto-centering on node:',
+					lastNode.id,
+					'at position:',
+					{ centerX, centerY }
+				);
 
 				if (animate) {
 					reactFlowInstance.setCenter(centerX, centerY, {
