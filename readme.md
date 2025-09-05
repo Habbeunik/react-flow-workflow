@@ -6,8 +6,18 @@ A powerful React hook for building interactive workflow diagrams with React Flow
 [![npm downloads](https://img.shields.io/npm/dm/react-flow-workflow.svg)](https://www.npmjs.com/package/react-flow-workflow)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## 🎮 Demo
+
+### Live Demo
+
+Check out the live demo application built with `react-flow-workflow`:
+**[🚀 Pokemon Flow Visualizer](https://pokemon-flow-visualizer-omega.vercel.app/)**
+**[📁 GitHub Repository](https://github.com/Habbeunik/pokemon-flow-visualizer)**
+![Demo](demo.gif)
+
 ## Table of Contents
 
+- [Demo](#-demo)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Features](#features)
